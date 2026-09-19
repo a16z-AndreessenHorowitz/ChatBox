@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ═══════════════════════════════════════════════
+   Design Tokens
+   ═══════════════════════════════════════════════ */
+:root {
+  --accent:        #1a6cf0;
+  --accent-bg:     #e8f0fe;
+  --accent-hover:  #1558cc;
+
+  --user-bubble:      #e8edf5;
+  --user-bubble-text: #0d0d0d;
+
+  --sidebar-bg:     #ffffff;
+  --sidebar-border: #ebebeb;
+
+  --panel-bg:  #f7f8fa;
+  --chat-bg:   #f7f8fa;
+
+  --text-primary:   #111111;
+  --text-secondary: #5f6368;
+  --text-muted:     #9aa0a6;
+
+  --border:      #e2e4e8;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   18px;
+  --radius-pill: 999px;
+}
+
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  color: var(--text-primary);
+  background: #eef0f3;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+.auth-page {
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+.auth-placeholder {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.auth-placeholder h1 {
+  font-size: 28px;
+}
+
+.auth-placeholder p {
+  color: var(--text-secondary);
+}
+
+.auth-placeholder-back {
+  color: var(--accent);
+  text-decoration: none;
+}
