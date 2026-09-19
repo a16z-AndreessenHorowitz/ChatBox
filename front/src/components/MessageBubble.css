@@ -1,0 +1,321 @@
+
+.msg-row {
+  display: flex;
+  margin-bottom: 0.9rem;
+  animation: fadeUp 0.2s ease;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+.msg-row--user {
+  justify-content: flex-end;
+}
+
+.bubble-user {
+  background: var(--user-bubble);
+  color: var(--user-bubble-text);
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg);
+  max-width: 72%;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+
+.msg-row--bot {
+  justify-content: flex-start;
+}
+
+.bot-msg-content {
+  max-width: 92%;
+}
+
+
+.bot-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.source-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.7rem;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-radius: var(--radius-pill);
+  font-size: 0.74rem;
+  font-weight: 500;
+  border: 1px solid #c5d8fc;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.source-pill-page {
+  color: #5580cc;
+  font-size: 0.68rem;
+}
+
+
+@media (max-width: 700px) {
+  .bubble-user {
+    max-width: 86%;
+  }
+
+  .bot-msg-content {
+    max-width: 100%;
+  }
+}
+
+
+.bot-text {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* Không tạo khoảng trắng thừa ở đầu/cuối */
+.bot-text > :first-child {
+  margin-top: 0;
+}
+
+.bot-text > :last-child {
+  margin-bottom: 0;
+}
+
+/* Paragraph */
+.bot-text p {
+  margin: 0 0 0.85rem;
+}
+
+/* Headings */
+.bot-text h1,
+.bot-text h2,
+.bot-text h3,
+.bot-text h4,
+.bot-text h5,
+.bot-text h6 {
+  color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 1.35rem 0 0.65rem;
+}
+
+.bot-text h1 {
+  font-size: 1.45rem;
+}
+
+.bot-text h2 {
+  font-size: 1.25rem;
+}
+
+.bot-text h3 {
+  font-size: 1.1rem;
+}
+
+.bot-text h4 {
+  font-size: 1rem;
+}
+
+.bot-text h5,
+.bot-text h6 {
+  font-size: 0.95rem;
+}
+
+/* Bold */
+.bot-text strong {
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+/* Italic */
+.bot-text em {
+  font-style: italic;
+}
+
+/* Lists */
+.bot-text ul,
+.bot-text ol {
+  margin: 0 0 0.9rem;
+  padding-left: 1.5rem;
+}
+
+/*
+ * Markdown sẽ tự quyết định:
+ * - ul  -> bullet (dấu chấm tròn mặc định)
+ * - ol  -> numbered list (số thứ tự)
+ */
+.bot-text ul {
+  list-style-type: disc;
+}
+
+.bot-text ol {
+  list-style-type: decimal;
+}
+
+.bot-text li {
+  padding-left: 0.15rem;
+}
+
+.bot-text li + li {
+  margin-top: 0.3rem;
+}
+
+/* Nested lists */
+.bot-text li > ul,
+.bot-text li > ol {
+  margin-top: 0.3rem;
+  margin-bottom: 0.3rem;
+}
+
+/* Horizontal rule */
+.bot-text hr {
+  border: 0;
+  border-top: 1px solid var(--border-color, #d9e0ea);
+  margin: 1.25rem 0;
+}
+
+/* Inline code */
+.bot-text :not(pre) > code {
+  padding: 0.15rem 0.4rem;
+  background: var(--accent-bg, #f1f3f5);
+  border-radius: 5px;
+  color: var(--text-primary);
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+  font-size: 0.85em;
+}
+
+/* Code block */
+.bot-text pre {
+  max-width: 100%;
+  margin: 0 0 0.9rem;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  background: #f6f6f6;
+  border: 1px solid var(--border-color, #e5e5e5);
+  border-radius: 8px;
+  color: #242424;
+  line-height: 1.55;
+}
+
+.bot-text pre code {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+  font-size: 0.82rem;
+}
+
+/* Links */
+.bot-text a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bot-text a:hover {
+  opacity: 0.75;
+}
+
+/* Blockquote */
+.bot-text blockquote {
+  margin: 0 0 0.9rem;
+  padding: 0.15rem 0 0.15rem 1rem;
+  border-left: 3px solid var(--border-color, #d9e0ea);
+  color: var(--text-secondary, #666);
+}
+
+/* Table wrapper / horizontal scroll */
+.bot-text table {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 0.9rem;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 0.88rem;
+}
+
+/* Table cells */
+.bot-text th,
+.bot-text td {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border-color, #d9e0ea);
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+/* Table header */
+.bot-text th {
+  background: var(--accent-bg, #f7f7f7);
+  font-weight: 600;
+}
+
+/* Table row */
+.bot-text tr:nth-child(even) td {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+/* Images nếu Gemini/API sau này trả Markdown image */
+.bot-text img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* Small screens */
+@media (max-width: 600px) {
+  .bot-text {
+    font-size: 0.9rem;
+  }
+
+  .bot-text h1 {
+    font-size: 1.3rem;
+  }
+
+  .bot-text h2 {
+    font-size: 1.15rem;
+  }
+
+  .bot-text table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .bot-text th,
+  .bot-text td {
+    padding: 0.5rem 0.6rem;
+  }
+}

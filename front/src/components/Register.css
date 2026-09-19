@@ -1,0 +1,353 @@
+.register-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  padding: 24px;
+  color: #1e2329;
+  position: relative;
+}
+
+.register-card {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border: 1px solid #eaecef;
+  border-radius: 28px;
+  padding: 40px 36px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+}
+
+.register-header {
+  margin-top: 0;
+  text-align: left;
+  margin-bottom: 28px;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.register-header img{
+  width: 50%;
+  height: 50px;
+  object-fit: cover;
+}
+
+.register-brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  justify-content: center;
+}
+
+.register-logo {
+  height: 32px;
+  object-fit: contain;
+}
+
+.register-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1e2329;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.register-verify-desc {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 250;
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.register-verify-desc strong {
+  color: #1e2329;
+  font-weight: 500;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.register-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.register-form .form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e2329;
+}
+
+.register-form .input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.register-form .input-wrapper input {
+  width: 100%;
+  height: 48px;
+  padding: 12px 14px;
+  background-color: #ffffff;
+  border: 1px solid #eaecef;
+  border-radius: 10px;
+  color: #1e2329;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.register-form .input-wrapper input:focus {
+  border-color: #f0b90b;
+  box-shadow: 0 0 0 2px rgba(239, 211, 116, 0.2);
+}
+
+.register-form .input-wrapper input::placeholder {
+  color: #848e9c;
+  font-size: 14px;
+}
+
+.register-form .password-toggle-btn {
+  position: absolute;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: #848e9c;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.register-form .password-toggle-btn:hover {
+  color: #1e2329;
+}
+
+/* Verification Code Input Wrapper */
+.register-form .verify-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.register-form .verify-input-wrapper input {
+  width: 100%;
+  height: 48px;
+  padding: 12px 110px 12px 14px;
+  background-color: #ffffff;
+  border: 1px solid #eaecef;
+  border-radius: 10px;
+  color: #1e2329;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.register-form .verify-input-wrapper input:focus {
+  border-color: #f0b90b;
+  box-shadow: 0 0 0 2px rgba(239, 211, 116, 0.2);
+}
+
+.verify-badge-action {
+  position: absolute;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #848e9c;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  user-select: none;
+}
+
+.verify-badge-action i,
+.verify-badge-action svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.8;
+}
+
+.register-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: #1e2329;
+  line-height: 1.45;
+  cursor: pointer;
+  user-select: none;
+}
+
+.register-terms input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: #1e2329;
+  cursor: pointer;
+}
+
+.register-terms-link {
+  color: #1e2329;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  font-weight: 500;
+}
+
+.register-btn-submit {
+  width: 100%;
+  padding: 14px;
+  background: #fcd535;
+  border: none;
+  border-radius: 10px;
+  color: #1e2329;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.register-btn-submit:hover {
+  background: #f3be13a7;
+  box-shadow: 0 4px 14px rgba(240, 185, 11, 0.25);
+}
+
+.register-btn-submit:active {
+  transform: scale(0.99);
+}
+
+.register-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 18px 0 14px 0;
+}
+
+.register-divider::before,
+.register-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #eaecef;
+}
+
+.register-divider span {
+  padding: 0 14px;
+  color: #707a8a;
+  font-size: 13px;
+}
+
+.social-auth-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.social-auth-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid #eaecef;
+  border-radius: 10px;
+  color: #1e2329;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.social-auth-btn:hover {
+  background: #f8f9fa;
+  border-color: #d1d5db;
+}
+
+.social-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.social-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.verify-resend-link {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 14px;
+  color: #c99400;
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  display: block;
+  width: 100%;
+}
+
+.verify-resend-link:hover {
+  text-decoration: underline;
+}
+
+.register-footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #707a8a;
+}
+
+.register-footer-link {
+  color: #f0b90b;
+  text-decoration: none;
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+.register-footer-link:hover {
+  text-decoration: underline;
+}
+
+.auth-bottom-footer {
+  margin-top: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  font-size: 13px;
+  color: #707a8a;
+}
+
+.auth-bottom-footer a {
+  color: #707a8a;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.auth-bottom-footer a:hover {
+  color: #1e2329;
+}

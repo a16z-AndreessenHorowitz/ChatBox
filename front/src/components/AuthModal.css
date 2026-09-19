@@ -1,0 +1,61 @@
+.auth-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(2px);
+}
+
+.auth-modal-card {
+  position: relative;
+  width: min(100%, 520px);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border-radius: 28px;
+
+}
+
+.auth-modal-card > .login-container,
+.auth-modal-card > .register-container {
+  min-height: auto;
+  padding: 0;
+}
+
+.auth-modal-card .login-card,
+.auth-modal-card .register-card {
+  max-width: none;
+  margin: 0;
+  background: #ffffff;
+}
+
+.auth-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #5e6673;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.auth-modal-close:hover {
+  color: #1e2329;
+  background: #ffffff;
+}
+
+@media (max-width: 560px) {
+  .auth-modal-backdrop {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .auth-modal-card {
+    max-height: calc(100vh - 24px);
+  }
+}

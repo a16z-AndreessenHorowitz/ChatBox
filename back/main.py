@@ -1,0 +1,27 @@
+from database import init_db
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from routers import api_router
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+  try:
+    init_db()
+    print("Database khởi tạo thành công!")
+  except Exception as e:
+    print(f" Lỗi khởi tạo Database: {e}")
+    raise e
+  yield
+    
+
+app = FastAPI()
+
+app.add_middleware(
+  CORSMiddleware,
+  allow_origins=["*"],
+  allow_methods=["*"],
+  allow_headers=["*"],
+)
+
+app.include_router(api_router)
