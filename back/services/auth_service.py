@@ -1,3 +1,4 @@
+from __future__ import annotations
 import hashlib
 import hmac
 import re
@@ -7,7 +8,7 @@ from datetime import datetime, timezone
 from email.message import EmailMessage
 from email.utils import formataddr
 
-import psycopg2
+import psycopg
 
 from core.config import (
   OTP_TTL_SECONDS,
@@ -19,8 +20,7 @@ from core.config import (
   SMTP_USERNAME,
   VERIFICATION_TTL_SECONDS,
 )
-from database.connection import DatabaseConnectionError, get_connection
-from database.auth import initialize_auth_database
+import repositories.user_repository as user_repo
 
 
 PASSWORD_ITERATIONS = 310_000
@@ -33,23 +33,8 @@ class AuthServiceError(Exception):
     super().__init__(message)
 
 
-def _get_connection():
-  try:
-    initialize_auth_database()
-    return get_connection()
-  except DatabaseConnectionError as error:
-    raise AuthServiceError(str(error), 503) from error
-
-
-def _normalize_account(account: str) -> str:
+def normalize_account(account: str) -> str:
   return str(account).strip().lower()
-
-
-def _user_exists(account: str) -> bool:
-  with _get_connection() as connection:
-    with connection.cursor() as cursor:
-      cursor.execute("SELECT 1 FROM users WHERE account = %s", (account,))
-      return cursor.fetchone() is not None
 
 
 def _validate_password(password: str, confirm_password: str):
@@ -90,7 +75,7 @@ def _verify_password(password: str, stored_hash: str) -> bool:
   return hmac.compare_digest(actual_digest, expected_digest)
 
 
-def _send_otp_email(account: str, code: str):
+def send_otp_email(account: str, code: str):
   if not SMTP_USERNAME or not SMTP_PASSWORD or not SMTP_FROM_EMAIL:
     raise AuthServiceError(
       "Thiếu cấu hình Gmail SMTP trong file back/.env.",
@@ -119,28 +104,16 @@ def _send_otp_email(account: str, code: str):
 
 
 def send_otp_service(account: str) -> dict:
-  normalized_account = _normalize_account(account)
-  if _user_exists(normalized_account):
+  normalized_account = normalize_account(account)
+  if user_repo.user_exists(normalized_account):
     raise AuthServiceError("Tài khoản này đã được đăng ký.", 409)
 
   code = f"{secrets.randbelow(1_000_000):06d}"
-  _send_otp_email(normalized_account, code)
+  send_otp_email(normalized_account, code)
 
   code_hash = hashlib.sha256(code.encode("utf-8")).hexdigest()
   expires_at = datetime.now(timezone.utc).timestamp() + OTP_TTL_SECONDS
-  with _get_connection() as connection:
-    with connection.cursor() as cursor:
-      cursor.execute(
-        """
-        INSERT INTO otp_challenges (account, code_hash, expires_at)
-        VALUES (%s, %s, TO_TIMESTAMP(%s))
-        ON CONFLICT (account) DO UPDATE SET
-          code_hash = EXCLUDED.code_hash,
-          expires_at = EXCLUDED.expires_at
-        """,
-        (normalized_account, code_hash, expires_at),
-      )
-    connection.commit()
+  user_repo.upsert_otp_challenge(normalized_account, code_hash, expires_at)
 
   return {
     "ok": True,
@@ -150,48 +123,35 @@ def send_otp_service(account: str) -> dict:
 
 
 def verify_otp_service(account: str, code: str) -> dict:
-  normalized_account = _normalize_account(account)
-  with _get_connection() as connection:
-    with connection.cursor() as cursor:
-      cursor.execute(
-        "SELECT code_hash, expires_at FROM otp_challenges WHERE account = %s",
-        (normalized_account,),
-      )
-      challenge = cursor.fetchone()
+  normalized_account = normalize_account(account)
+  challenge = user_repo.get_otp_challenge(normalized_account)
 
-      if challenge is None:
-        raise AuthServiceError("Vui lòng yêu cầu mã OTP mới.")
+  if challenge is None:
+    raise AuthServiceError("Vui lòng yêu cầu mã OTP mới.")
 
-      code_hash, expires_at = challenge
-      now = datetime.now(timezone.utc)
-      # thời gian hết hạn
-      if expires_at < now:
-        cursor.execute(
-          "DELETE FROM otp_challenges WHERE account = %s",
-          (normalized_account,),
-        )
-        connection.commit()
-        raise AuthServiceError("Mã OTP đã hết hạn.")
+  code_hash = challenge["code_hash"]
+  expires_at = challenge["expires_at"]
+  now = datetime.now(timezone.utc)
+  # thời gian hết hạn
+  if expires_at < now:
+    user_repo.delete_otp_challenge(normalized_account)
+    raise AuthServiceError("Mã OTP đã hết hạn.")
 
-      # nếu chưa hêt hạn hash otp 
-      submitted_hash = hashlib.sha256(code.encode("utf-8")).hexdigest()
-      if not hmac.compare_digest(code_hash, submitted_hash):
-        raise AuthServiceError("Mã OTP không chính xác.")
+  # nếu chưa hêt hạn hash otp 
+  submitted_hash = hashlib.sha256(code.encode("utf-8")).hexdigest()
+  if not hmac.compare_digest(code_hash, submitted_hash):
+    raise AuthServiceError("Mã OTP không chính xác.")
 
-      temp_token = secrets.token_urlsafe(32)
-      # thời gian hết hạn của token xác thực đăng ký
-      token_expires_at = datetime.fromtimestamp(
-        datetime.now(timezone.utc).timestamp() + VERIFICATION_TTL_SECONDS,
-        timezone.utc,
-      )
-      # xoá mã otp đã xác thực thành công
-      cursor.execute("DELETE FROM otp_challenges WHERE account = %s", (normalized_account,))
-      # lưu temp token vào bảng verification_tokens
-      cursor.execute(
-        "INSERT INTO verification_tokens (token, account, expires_at) VALUES (%s, %s, %s)",
-        (temp_token, normalized_account, token_expires_at),
-      )
-    connection.commit()
+  temp_token = secrets.token_urlsafe(32)
+  # thời gian hết hạn của token xác thực đăng ký
+  token_expires_at = datetime.fromtimestamp(
+    datetime.now(timezone.utc).timestamp() + VERIFICATION_TTL_SECONDS,
+    timezone.utc,
+  )
+  # xoá mã otp đã xác thực thành công
+  user_repo.delete_otp_challenge(normalized_account)
+  # lưu temp token vào bảng verification_tokens
+  user_repo.save_verification_token(temp_token, normalized_account, token_expires_at)
 
   return {"ok": True, "token": temp_token}
 
@@ -203,64 +163,86 @@ def complete_register_service(
 ) -> dict:
   _validate_password(password, confirm_password)
 
-  with _get_connection() as connection:
-    with connection.cursor() as cursor:
-      cursor.execute(
-        "SELECT account, expires_at FROM verification_tokens WHERE token = %s",
-        (temp_token,),
-      )
-      verification = cursor.fetchone()
-      if verification is None:
-        raise AuthServiceError("Phiên đăng ký không hợp lệ hoặc đã hết hạn.")
+  verification = user_repo.get_verification_token(temp_token)
+  if verification is None:
+    raise AuthServiceError("Phiên đăng ký không hợp lệ hoặc đã hết hạn.")
 
-      account, expires_at = verification
-      if expires_at < datetime.now(timezone.utc):
-        cursor.execute(
-          "DELETE FROM verification_tokens WHERE token = %s",
-          (temp_token,),
-        )
-        connection.commit()
-        raise AuthServiceError("Phiên đăng ký đã hết hạn. Vui lòng đăng ký lại.")
+  account = verification["account"]
+  expires_at = verification["expires_at"]
+  if expires_at < datetime.now(timezone.utc):
+    user_repo.delete_verification_token(temp_token)
+    raise AuthServiceError("Phiên đăng ký đã hết hạn. Vui lòng đăng ký lại.")
 
-      try:
-        cursor.execute(
-          "INSERT INTO users (account, password_hash) VALUES (%s, %s)",
-          (account, _hash_password(password)),
-        )
-      except psycopg.errors.UniqueViolation as error:
-        connection.rollback()
-        raise AuthServiceError("Tài khoản này đã được đăng ký.", 409) from error
+  try:
+    user_id = user_repo.create_user(account, _hash_password(password))
+  except psycopg.errors.UniqueViolation as error:
+    raise AuthServiceError("Tài khoản này đã được đăng ký.", 409) from error
 
-      cursor.execute(
-        "DELETE FROM verification_tokens WHERE token = %s",
-        (temp_token,),
-      )
-    connection.commit()
+  user_repo.delete_verification_token(temp_token)
 
   return {
     "ok": True,
     "message": "Đăng ký thành công.",
-    "token": secrets.token_urlsafe(32),
+    "user_id": user_id,
     "account": account,
   }
 
 
-def login_service(account: str, password: str) -> dict:
-  normalized_account = _normalize_account(account)
-  with _get_connection() as connection:
-    with connection.cursor() as cursor:
-      cursor.execute(
-        "SELECT password_hash FROM users WHERE account = %s",
-        (normalized_account,),
-      )
-      user = cursor.fetchone()
+from services.auth_token import create_access_token, decode_access_token
 
-  if user is None or not _verify_password(password, user[0]):
+def login_service(account: str, password: str) -> dict:
+  normalized_account = normalize_account(account)
+  user = user_repo.get_user_by_account(normalized_account)
+
+  if user is None or not _verify_password(password, user["password_hash"]):
     raise AuthServiceError("Email hoặc mật khẩu không đúng.", 401)
+
+  role = user.get("role", "user")
+  token = create_access_token(user_id=user["id"], role=role)
 
   return {
     "ok": True,
-    "token": secrets.token_urlsafe(32),
+    "user_id": user["id"],
+    "role": role,
+    "token": token,
     "account": normalized_account,
     "email": normalized_account,
   }
+
+
+def get_user_id_by_account(account: str) -> int | None:
+  if not account:
+    return None
+  normalized_account = normalize_account(account)
+  return user_repo.get_user_id_by_account(normalized_account)
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from services.auth_token import InvalidTokenError
+
+security = HTTPBearer()
+security_optional = HTTPBearer(auto_error=False)
+
+
+def get_current_user(
+  credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> dict:
+  try:
+    return decode_access_token(credentials.credentials)
+  except InvalidTokenError as error:
+    raise HTTPException(
+      status_code=status.HTTP_401_UNAUTHORIZED,
+      detail=error.message,
+      headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+def get_current_user_optional(
+  credentials: HTTPAuthorizationCredentials | None = Depends(security_optional),
+) -> dict | None:
+  if not credentials:
+    return None
+  try:
+    return decode_access_token(credentials.credentials)
+  except InvalidTokenError:
+    return None

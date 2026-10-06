@@ -3,8 +3,8 @@ import './ChatWindow.css';
 import MessageBubble from './MessageBubble.jsx';
 import ChatInput from './ChatInput.jsx';
 import ChatSidebar from './ChatSidebar.jsx';
-import { initialMessages } from '../mock/conversations.js';
-import { sendMessage, getHistory } from '../services/api/chat.js';
+import { initialMessages } from '../../mock/conversations.js';
+import { sendMessage, getHistory } from '../../services/api/chat.js';
 import AuthModal from './AuthModal.jsx';
 
 
@@ -22,14 +22,17 @@ export default function ChatWindow() {
 
   useEffect(() => {
     const email = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail');
+    const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
     if (email) {
-      setUser({ email, name: email.split('@')[0], initials: 'TS' });
+      setUser({ id: userId ? Number(userId) : null, email, name: email.split('@')[0], initials: 'TS' });
     }
   }, []);
 
   useEffect(() => {
     async function loadChatHistory() {
       if (!activeId) return;
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+      if (!user || !token) return;
       setIsLoading(true);
       try {
         const data = await getHistory(activeId);
@@ -65,7 +68,7 @@ export default function ChatWindow() {
       }
     }
     loadChatHistory();
-  }, [activeId]);
+  }, [activeId, user]);
 
   const handleSend = async (text) => {
     const userMsg = {
@@ -78,10 +81,11 @@ export default function ChatWindow() {
     setIsLoading(true);
 
     try {
-      const botMsg = await sendMessage(text, activeId);
+      const botMsg = await sendMessage(text, activeId, user?.id, user?.email);
       setMessages((prev) => [...prev, botMsg]);
-      setActiveId(botMsg.session_id);
-      
+      if (botMsg.session_id) {
+        setActiveId(botMsg.session_id);
+      }
     } catch {
       setMessages((prev) => [
         ...prev,

@@ -22,6 +22,7 @@ def initialize_auth_database():
           CREATE TABLE IF NOT EXISTS users (
             id BIGSERIAL PRIMARY KEY,
             account TEXT NOT NULL UNIQUE,
+            role TEXT NOT NULL DEFAULT 'user',
             password_hash TEXT NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
           )

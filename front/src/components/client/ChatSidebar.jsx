@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getSessions } from '../services/api/chat';
+import { getSessions } from '../../services/api/chat';
 import './ChatSidebar.css';
 
 export default function ChatSidebar({
@@ -19,8 +19,14 @@ export default function ChatSidebar({
   };
 
 
-  const [history,setHistory] = useState([]);
+  const [history, setHistory] = useState([]);
   useEffect(() => {
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+    if (!user || !token) {
+      setHistory([]);
+      return;
+    }
+
     async function fetchSessions() {
       try {
         const sessions = await getSessions();
@@ -36,7 +42,7 @@ export default function ChatSidebar({
       }
     }
     fetchSessions();
-  }, [activeId])
+  }, [activeId, user]);
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       {/* Logo */}

@@ -9,8 +9,10 @@ class Source(BaseModel):
 class ChatRequest(BaseModel):
   message: str
   session_id: Optional[UUID] = None
+  user_id: Optional[int] = None
+  account: Optional[str] = None
 
 class ChatResponse(BaseModel):
-  session_id: UUID
+  session_id: Optional[UUID] = None
   answer: str
   sources: list[Source] = Field(default_factory=list)
