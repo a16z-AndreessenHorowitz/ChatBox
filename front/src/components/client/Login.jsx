@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css"; 
-import { login } from "../services/api/auth";
+import { login } from "../../services/api/auth";
 
 function Login({ onClose, onAuthenticated, onRegister }) {
   const navigate = useNavigate();
@@ -34,14 +34,26 @@ function Login({ onClose, onAuthenticated, onRegister }) {
       const storage = formData.rememberMe ? localStorage : sessionStorage;
       storage.setItem("accessToken", data.token);
       storage.setItem("userEmail", data.email);
+      if (data.user_id) {
+        storage.setItem("userId", data.user_id);
+      }
+      if (data.role) {
+        storage.setItem("userRole", data.role);
+      }
 
       if (typeof onAuthenticated === "function") {
-        onAuthenticated({ email: data.email, name: data.email.split('@')[0], initials: 'TS' });
+        onAuthenticated({ id: data.user_id, email: data.email, name: data.email.split('@')[0], initials: 'TS' });
       }
+
+      const isAdmin = Boolean(data.role) && data.role.toLowerCase() !== "user";
 
       if (typeof onClose === "function") {
         onClose();
-      } else {
+      }
+
+      if (isAdmin) {
+        navigate("/admin");
+      } else if (typeof onClose !== "function") {
         navigate("/");
       }
     } catch (err) {

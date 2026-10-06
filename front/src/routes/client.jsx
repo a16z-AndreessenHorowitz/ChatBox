@@ -1,7 +1,8 @@
 import { Link, Navigate, Route, Routes } from 'react-router-dom';
-import ChatWindow from '../components/ChatWindow.jsx';
-import Login from '../components/Login.jsx';
-import Register from '../components/Register.jsx';
+import ChatWindow from '../components/client/ChatWindow.jsx';
+import Login from '../components/client/Login.jsx';
+import Register from '../components/client/Register.jsx';
+import Home from '../pages/client/home.jsx';
 
 function AuthPage({ children }) {
   return <div className="auth-page">{children}</div>;
@@ -24,7 +25,9 @@ function ForgotPasswordPage() {
 export default function ClientRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<ChatWindow />} />
+      <Route path="/" element={<Home/>} />
+
+      <Route path="/chat" element={<ChatWindow />} />
       <Route
         path="/login"
         element={
@@ -42,7 +45,7 @@ export default function ClientRoutes() {
         }
       />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="*" element={<Navigate to="/overview" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

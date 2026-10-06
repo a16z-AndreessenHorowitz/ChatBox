@@ -78,3 +78,8 @@ button {
   color: var(--accent);
   text-decoration: none;
 }
+
+p{
+  margin: 0;
+}
+

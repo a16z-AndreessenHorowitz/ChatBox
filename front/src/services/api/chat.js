@@ -1,18 +1,19 @@
 import { request } from './request';
 
-export async function sendMessage(message, session_id = null) {
+export async function sendMessage(message, session_id = null, user_id = null, account = null) {
   const data = await request('/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ message, session_id }),
+    body: JSON.stringify({ message, session_id, user_id, account }),
   });
 
   return {
     id: Date.now(),
     role: 'bot',
     timestamp: new Date().toISOString(),
+    session_id: data.session_id,
     response: {
       type: 'markdown',
       answer: data.answer,

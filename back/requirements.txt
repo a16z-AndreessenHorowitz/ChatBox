@@ -4,3 +4,7 @@ email-validator
 python-dotenv
 psycopg[binary]
 google-genai
+PyJWT
+cloudinary
+python-multipart
+boto3

@@ -1,8 +1,11 @@
-from database import init_db
+
 from contextlib import asynccontextmanager
+
+from database.init_db import init_db
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import api_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -13,9 +16,9 @@ async def lifespan(app: FastAPI):
     print(f" Lỗi khởi tạo Database: {e}")
     raise e
   yield
-    
 
-app = FastAPI()
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
   CORSMiddleware,
