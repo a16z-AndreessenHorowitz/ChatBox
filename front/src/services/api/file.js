@@ -3,14 +3,18 @@ import { request } from "./request";
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 const R2_UPLOAD_TIMEOUT_MS = 60_000;
 
-async function uploadToStorage(uploadUrl, formData) {
+async function uploadToStorage(uploadUrl, file, headers = {}) {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), R2_UPLOAD_TIMEOUT_MS);
 
   try {
     return await fetch(uploadUrl, {
-      method: 'POST',
-      body: formData,
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type || 'application/octet-stream',
+        ...headers,
+      },
+      body: file,
       signal: controller.signal,
     });
   } catch (error) {
@@ -32,6 +36,7 @@ async function uploadViaBackend(file) {
   });
 }
 
+
 export async function uploadFile(file) {
   if (!file) throw new Error("Chưa chọn tệp.");
   if (file.size > MAX_FILE_SIZE) {
@@ -48,16 +53,10 @@ export async function uploadFile(file) {
       file_size: file.size,
     }),
   });
-  const formData = new FormData();
-  Object.entries(credentials.fields).forEach(([key, value]) => {
-    formData.append(key, String(value));
-  });
-  formData.append('file', file);
-
   console.info('[Upload] Đang upload lên Cloudflare R2:', credentials.metadata?.public_id);
   let uploadResponse;
   try {
-    uploadResponse = await uploadToStorage(credentials.upload_url, formData);
+    uploadResponse = await uploadToStorage(credentials.upload_url, file, credentials.headers);
   } catch (error) {
     console.warn('[Upload] Direct R2 upload lỗi, chuyển sang backend upload:', error.message);
     return uploadViaBackend(file);
@@ -67,12 +66,7 @@ export async function uploadFile(file) {
     throw new Error(uploadText || 'Upload storage thất bại.');
   }
 
-  const metadata = credentials.metadata || Object.fromEntries(
-    Object.entries(credentials.response_fields).map(([name, responseKey]) => [
-      name,
-      '',
-    ]),
-  );
+  const metadata = credentials.metadata || {};
   metadata.original_filename = file.name;
   metadata.file_size = file.size;
 
@@ -88,4 +82,18 @@ export async function getRecentFiles() {
   return request("/documents/recent",{
     method: "GET"
   })
+}
+
+export async function getDocumentDetail(documentId) {
+  return request(`/documents/${documentId}`, {
+    method: "GET",
+  });
+}
+
+export async function updateDocumentMarkdown(documentId, markdownContent) {
+  return request(`/documents/${documentId}/markdown`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ markdown_content: markdownContent }),
+  });
 }

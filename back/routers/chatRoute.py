@@ -20,6 +20,18 @@ async def chat(
     raise HTTPException(status_code=400, detail="Message không được để trống")
   try:
     user_id = int(current_user["sub"]) if current_user and "sub" in current_user else None
+    query_vector = request.query_vector or []
+    print(
+      "[ChatRoute] Nhận request từ frontend:",
+      {
+        "message": request.message,
+        "session_id": str(request.session_id) if request.session_id else None,
+        "user_id": user_id or request.user_id,
+        "account": request.account,
+        "query_vector_length": len(query_vector),
+        "query_vector_preview": query_vector[:5],
+      },
+    )
     return await handle_chat(request, user_id_from_token=user_id)
   except Exception as e:
     raise HTTPException(status_code=500, detail=f"Không thể gọi Gemini API: {str(e)}")
