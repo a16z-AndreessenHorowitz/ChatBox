@@ -73,6 +73,171 @@
 .upload-notice i {
   margin-right: 5px;
 }
+.document-detail-section {
+  margin-top: 28px;
+  padding: 18px;
+  border: 1px solid #e2e0e7;
+  border-radius: 11px;
+  background: #fff;
+}
+.document-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.document-detail-head h2 {
+  margin: 0;
+  color: #3f3b46;
+  font-size: 18px;
+  letter-spacing: -0.3px;
+}
+.document-detail-head p {
+  margin: 5px 0 0;
+  color: #8a8792;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.close-detail-button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 8px;
+  color: #817d89;
+  background: #f5f4f7;
+}
+.detail-message {
+  margin: 0 0 12px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.detail-message.success {
+  color: #177844;
+  background: #e9f8ef;
+}
+.detail-message.error {
+  color: #b42318;
+  background: #fff0ed;
+}
+.detail-loading {
+  padding: 32px 0;
+  color: #7c7885;
+  text-align: center;
+  font-size: 14px;
+}
+.document-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+.pdf-panel,
+.markdown-panel {
+  min-width: 0;
+  border: 1px solid #e8e6ec;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+/* Cấu hình khung chứa PDF */
+.pdf-panel {
+  display: flex;
+  flex-direction: column;
+  height: 600px; /* Hoặc chiều cao mong muốn của bạn, ví dụ: 70vh */
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+/* Cấu hình toolbar phía trên */
+.pdf-panel .panel-toolbar {
+  padding: 10px 16px;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Cho iframe tràn full toàn bộ khung chứa */
+.pdf-panel iframe {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  border: none;
+  background-color: #525659; /* Màu nền chờ đệm của PDF viewer */
+}
+
+.panel-toolbar strong {
+  color: #494651;
+  font-size: 13px;
+}
+.panel-toolbar a,
+.panel-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: #5d4fd6;
+  background: #f1efff;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.panel-toolbar button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.markdown-panel {
+  display: grid;
+  grid-template-rows: auto minmax(260px, 340px) minmax(260px, 1fr);
+}
+.markdown-panel textarea {
+  width: 100%;
+  min-height: 0;
+  padding: 14px;
+  border: 0;
+  border-bottom: 1px solid #eceaf0;
+  resize: vertical;
+  color: #393641;
+  font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  outline: none;
+}
+.markdown-preview {
+  max-height: 340px;
+  padding: 14px;
+  overflow: auto;
+  color: #3f3b46;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.markdown-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.markdown-preview th,
+.markdown-preview td {
+  padding: 7px 9px;
+  border: 1px solid #dedbe4;
+  text-align: left;
+  vertical-align: top;
+}
+.markdown-preview th {
+  background: #f7f6fa;
+}
+.markdown-preview pre {
+  max-width: 100%;
+  overflow: auto;
+}
 .processing-section {
   margin-top: 30px;
 }
@@ -228,6 +393,15 @@
   background: #e7f7eb;
   font-size: 12px;
 }
+.indexed.uploaded,
+.indexed.processing {
+  color: #c48100;
+  background: #fff4dc;
+}
+.indexed.failed {
+  color: #b42318;
+  background: #fff0ed;
+}
 @media (max-width: 760px) {
   .knowledge-content {
     width: min(100% - 28px, 1178px);
@@ -270,5 +444,21 @@
   }
   .recent-table {
     min-width: 840px;
+  }
+  .document-detail-section {
+    padding: 13px;
+  }
+  .document-detail-head {
+    align-items: center;
+  }
+  .document-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .pdf-panel iframe {
+    height: 480px;
+  }
+  .panel-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

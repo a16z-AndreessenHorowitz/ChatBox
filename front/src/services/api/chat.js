@@ -1,12 +1,18 @@
 import { request } from './request';
 
-export async function sendMessage(message, session_id = null, user_id = null, account = null) {
+export async function sendMessage(
+  message,
+  session_id = null,
+  user_id = null,
+  account = null,
+  query_vector = null,
+) {
   const data = await request('/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ message, session_id, user_id, account }),
+    body: JSON.stringify({ message, session_id, user_id, account, query_vector }),
   });
 
   return {

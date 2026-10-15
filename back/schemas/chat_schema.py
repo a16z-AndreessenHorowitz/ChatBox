@@ -11,6 +11,7 @@ class ChatRequest(BaseModel):
   session_id: Optional[UUID] = None
   user_id: Optional[int] = None
   account: Optional[str] = None
+  query_vector: Optional[list[float]] = None
 
 class ChatResponse(BaseModel):
   session_id: Optional[UUID] = None

@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import AdminLayout from "../../components/admin/AdminLayout";
-import { uploadFile, getRecentFiles } from "../../services/api/file";
+import {
+  getDocumentDetail,
+  getRecentFiles,
+  updateDocumentMarkdown,
+  uploadFile,
+} from "../../services/api/file";
 import "./documentKnowledge.css";
 
 const processingFiles = [
@@ -32,30 +39,76 @@ export default function DocumentKnowledge() {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedNames, setUploadedNames] = useState([]);
   const [uploadError, setUploadError] = useState("");
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [markdownDraft, setMarkdownDraft] = useState("");
+  const [detailError, setDetailError] = useState("");
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [isSavingMarkdown, setIsSavingMarkdown] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
 
   //recent file
   const [recentFiles, setRecentFiles] = useState([])
 
-  useEffect(()=>{
-    async function loadFiles() {
-      const result= await getRecentFiles();
-      setRecentFiles(result)
+  const loadRecentFiles = async () => {
+    const result = await getRecentFiles();
+    setRecentFiles(result);
+  };
 
-    }
-    loadFiles()
+  useEffect(()=>{
+    loadRecentFiles().catch((error) => setUploadError(error.message));
   },[])
 
-
+// collectFiles(files) & onDrop
   const collectFiles = async (files) => {
     setUploadError("");
     const selectedFiles = Array.from(files);
     setUploadedNames(selectedFiles.map((file) => file.name));
     try {
-      const result=await Promise.all(
+      await Promise.all(
         selectedFiles.map((file)=>uploadFile(file))
       );
+      await loadRecentFiles();
     } catch (error) {
       setUploadError(error.message);
+    }
+  };
+
+
+  // openDocumentDetail(documentId
+  const openDocumentDetail = async (documentId) => {
+    setDetailError("");
+    setSaveMessage("");
+    setIsDetailLoading(true);
+    try {
+      const document = await getDocumentDetail(documentId);
+      setSelectedDocument(document);
+      setMarkdownDraft(document.markdown_content || "");
+    } catch (error) {
+      setDetailError(error.message);
+    } finally {
+      setIsDetailLoading(false);
+    }
+  };
+
+
+// saveMarkdown()
+  const saveMarkdown = async () => {
+    if (!selectedDocument) return;
+
+    setDetailError("");
+    setSaveMessage("");
+    setIsSavingMarkdown(true);
+    try {
+      const updatedDocument = await updateDocumentMarkdown(
+        selectedDocument.id,
+        markdownDraft,
+      );
+      setSelectedDocument(updatedDocument);
+      setSaveMessage("Đã lưu nội dung Markdown.");
+    } catch (error) {
+      setDetailError(error.message);
+    } finally {
+      setIsSavingMarkdown(false);
     }
   };
 
@@ -64,6 +117,7 @@ export default function DocumentKnowledge() {
     setIsDragging(false);
     collectFiles(event.dataTransfer.files);
   };
+
 
   return (
     <AdminLayout activePage="Kho tri thức">
@@ -117,14 +171,83 @@ export default function DocumentKnowledge() {
             </p>
           )}
           {uploadError && <p className="upload-notice">{uploadError}</p>}
-          <section className="processing-section">
-            <h2>Đang xử lý ({processingFiles.length} tệp)</h2>
-            <div className="processing-list">
-              {processingFiles.map((file) => (
-                <ProcessingFile key={file.name} {...file} />
-              ))}
-            </div>
-          </section>
+          {(selectedDocument || isDetailLoading || detailError) && (
+            <section className="document-detail-section">
+              <div className="document-detail-head">
+                <div>
+                  <h2>Chi tiết tài liệu</h2>
+                  <p>
+                    {selectedDocument?.original_filename ||
+                      "Đang tải nội dung tài liệu..."}
+                  </p>
+                </div>
+                {selectedDocument && (
+                  <button
+                    className="close-detail-button"
+                    type="button"
+                    onClick={() => {
+                      setSelectedDocument(null);
+                      setMarkdownDraft("");
+                      setDetailError("");
+                      setSaveMessage("");
+                    }}
+                    aria-label="Đóng chi tiết tài liệu"
+                  >
+                    <i className="bi bi-x-lg" />
+                  </button>
+                )}
+              </div>
+              {detailError && <p className="detail-message error">{detailError}</p>}
+              {saveMessage && <p className="detail-message success">{saveMessage}</p>}
+              {isDetailLoading ? (
+                <div className="detail-loading">Đang tải chi tiết tài liệu...</div>
+              ) : selectedDocument && (
+                <div className="document-detail-grid">
+                  <div className="pdf-panel">
+                    <div className="panel-toolbar">
+                      <strong>PDF gốc</strong>
+                      <a
+                        href={selectedDocument.secure_url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <i className="bi bi-box-arrow-up-right" />
+                        Mở file
+                      </a>
+                    </div>
+                    <iframe
+                      src={`${selectedDocument.secure_url}#toolbar=1&navpanes=0&view=FitH`}
+                      title={`PDF ${selectedDocument.original_filename}`}
+                    />
+                  </div>
+                  <div className="markdown-panel">
+                    <div className="panel-toolbar">
+                      <strong>Markdown</strong>
+                      <button
+                        type="button"
+                        onClick={saveMarkdown}
+                        disabled={isSavingMarkdown}
+                      >
+                        <i className="bi bi-save" />
+                        {isSavingMarkdown ? "Đang lưu" : "Lưu chỉnh sửa"}
+                      </button>
+                    </div>
+                    <textarea
+                      value={markdownDraft}
+                      onChange={(event) => setMarkdownDraft(event.target.value)}
+                      placeholder="Nội dung Markdown sau khi xử lý sẽ hiển thị ở đây."
+                    />
+                    <div className="markdown-preview">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {markdownDraft || "_Chưa có nội dung Markdown._"}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
 
           <section className="recent-section">
             <h2>Tài liệu gần đây</h2>
@@ -156,11 +279,17 @@ export default function DocumentKnowledge() {
                       </td>
                       <td>{file.file_size}</td>
                       <td>
-                        <span className="indexed">Đã lập chỉ mục</span>
+                        <span className={`indexed ${file.status?.toLowerCase()}`}>
+                          {file.status}
+                        </span>
                       </td>
                       <td>
-                        <button aria-label={`Thao tác với ${file.original_filename}`}>
-                          <i className="bi bi-three-dots" />
+                        <button
+                          type="button"
+                          onClick={() => openDocumentDetail(file.id)}
+                          aria-label={`Xem chi tiết ${file.original_filename}`}
+                        >
+                          <i className="bi bi-eye" />
                         </button>
                       </td>
                     </tr>
@@ -176,24 +305,4 @@ export default function DocumentKnowledge() {
   );
 }
 
-function ProcessingFile({ name, type, progress, label, accent }) {
-  return (
-    <article className="processing-file">
-      <div className="processing-file-head">
-        <span className={`document-type ${type}`}>
-          <i
-            className={`bi ${type === "pdf" ? "bi-file-earmark-pdf-fill" : "bi-file-earmark-spreadsheet-fill"}`}
-          />
-        </span>
-        <strong>{name}</strong>
-        <span className={`processing-label ${accent}`}>
-          {accent === "amber" && <i className="bi bi-stars" />}
-          {label}
-        </span>
-      </div>
-      <div className="progress-track">
-        <span className={accent} style={{ width: `${progress}%` }} />
-      </div>
-    </article>
-  );
-}
+

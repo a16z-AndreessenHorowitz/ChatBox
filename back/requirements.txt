@@ -8,3 +8,16 @@ PyJWT
 cloudinary
 python-multipart
 boto3
+requests
+langchain-text-splitters
+
+# --- Embedding & Local ONNX Model (< 30MB) ---
+"optimum[onnxruntime]>=1.16.0"
+onnxruntime>=1.16.0
+transformers>=4.36.0
+torch>=2.1.0
+
+# --- Vector DB & PDF Processing (Nên bổ sung nếu chạy RAG pipeline tại backend) ---
+faiss-cpu
+pdfplumber
+PyMuPDF

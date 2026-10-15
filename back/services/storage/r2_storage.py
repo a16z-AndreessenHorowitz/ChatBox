@@ -52,17 +52,13 @@ class R2Storage(BaseStorage):
         public_url = f"{self.public_domain}/{object_key}"
 
         try:
-            presigned_post = self.s3_client.generate_presigned_post(
-                Bucket=self.bucket_name,
-                Key=object_key,
-                Fields={
-                    "success_action_status": "201",
-                    "Content-Type": upload_content_type,
+            presigned_url = self.s3_client.generate_presigned_url(
+                ClientMethod="put_object",
+                Params={
+                    "Bucket": self.bucket_name,
+                    "Key": object_key,
+                    "ContentType": upload_content_type,
                 },
-                Conditions=[
-                    {"Content-Type": upload_content_type},
-                    ["content-length-range", 1, MAX_UPLOAD_SIZE],
-                ],
                 ExpiresIn=600,
             )
         except ClientError as error:
@@ -72,15 +68,14 @@ class R2Storage(BaseStorage):
             ) from error
 
         return {
-            "upload_url": presigned_post["url"],
-            "fields": presigned_post["fields"],
+            "upload_url": presigned_url,
+            "method": "PUT",
+            "headers": {
+                "Content-Type": upload_content_type,
+            },
             "metadata": {
                 "public_id": object_key,
                 "secure_url": public_url,
-            },
-            "response_fields": {
-                "public_id": "Key",
-                "secure_url": "Location",
             },
         }
 

@@ -1,7 +1,13 @@
 import { useState, useRef } from 'react';
 import './ChatInput.css';
 
-export default function ChatInput({ onSend, isLoading }) {
+export default function ChatInput({
+  onSend,
+  isLoading,
+  embeddingStatus = '',
+  embeddingProgress = null,
+  showEmbeddingNotice = false,
+}) {
 
   const [value, setValue] = useState('');
   const textareaRef = useRef(null);
@@ -32,6 +38,29 @@ export default function ChatInput({ onSend, isLoading }) {
 
   return (
     <div className="input-bar">
+      {(embeddingStatus || showEmbeddingNotice) && (
+        <div className="embedding-notice">
+          <p>
+            {embeddingStatus || 'Lần đầu gửi câu hỏi, trình duyệt sẽ tải mô hình nhúng để tìm tài liệu liên quan.'}
+          </p>
+          {embeddingProgress && (
+            <div className="embedding-progress" aria-live="polite">
+              <div className="embedding-progress-track">
+                <div
+                  className="embedding-progress-fill"
+                  style={{ width: `${embeddingProgress.percent}%` }}
+                />
+              </div>
+              <span className="embedding-progress-value">
+                {embeddingProgress.percent}%
+                {embeddingProgress.total && embeddingProgress.loaded != null
+                  ? ` - ${(embeddingProgress.loaded / 1024 / 1024).toFixed(1)} / ${(embeddingProgress.total / 1024 / 1024).toFixed(1)} MB`
+                  : ''}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
       <div className="input-pill">
         <textarea
           ref={textareaRef}

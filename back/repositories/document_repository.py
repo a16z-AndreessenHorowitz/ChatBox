@@ -82,7 +82,12 @@ def get_document_by_id(document_id: int) -> dict:
                     id, 
                     secure_url,
                     status,
-                    original_filename
+                    original_filename,
+                    public_id,
+                    file_size,
+                    category,
+                    markdown_content,
+                    created_at
                 FROM documents 
                 WHERE id = %s
                 """, 
@@ -95,7 +100,12 @@ def get_document_by_id(document_id: int) -> dict:
             "id": row[0],
             "secure_url": row[1],
             "status": row[2],
-            "original_filename": row[3]
+            "original_filename": row[3],
+            "public_id": row[4],
+            "file_size": row[5],
+            "category": row[6],
+            "markdown_content": row[7] or "",
+            "created_at": row[8],
         }
     return None
 
@@ -122,4 +132,32 @@ def update_document_status(document_id: int, status: str, error_message: str = N
                     """,
                     (status, document_id)
                 )
+        connection.commit()
+
+
+def update_document_markdown(document_id: int, markdown_content: str) -> None:
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE documents
+                SET markdown_content = %s
+                WHERE id = %s
+                """,
+                (markdown_content, document_id),
+            )
+        connection.commit()
+
+
+def update_document_category(document_id: int, category: str) -> None:
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE documents
+                SET category = %s
+                WHERE id = %s
+                """,
+                (category, document_id),
+            )
         connection.commit()

@@ -12,3 +12,7 @@ class DocumentMetadata(BaseModel):
   secure_url: str = Field(min_length=1, max_length=2000)
   original_filename: str = Field(min_length=1, max_length=500)
   file_size: int = Field(gt=0)
+
+
+class DocumentMarkdownUpdate(BaseModel):
+  markdown_content: str = Field(default="")

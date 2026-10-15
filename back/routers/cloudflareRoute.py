@@ -4,7 +4,11 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, status, BackgroundTasks, UploadFile
 
-from services.document.document_service import create_document_metadata
+from services.document.document_service import (
+  create_document_metadata,
+  get_document_detail,
+  update_document_markdown_content,
+)
 from services.auth_service import get_current_user
 from services.cloudflare import (
   create_upload_credentials,
@@ -12,7 +16,7 @@ from services.cloudflare import (
 )
 from services.storage.base import StorageServiceError
 from services.storage.factory import get_storage_service
-from schemas.document_schema import DocumentMetadata, UploadSignatureRequest
+from schemas.document_schema import DocumentMarkdownUpdate, DocumentMetadata, UploadSignatureRequest
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 MAX_UPLOAD_SIZE = 50 * 1024 * 1024
@@ -36,7 +40,7 @@ async def create_upload_signature(
     raise HTTPException(status_code=error.status_code, detail=error.message) from error
 
 
-#lưu thông tin file
+#lưu thông tin file sau khi upload xong
 @router.post("/upload/metadata", status_code=status.HTTP_201_CREATED)
 async def save_upload_metadata(
   metadata: DocumentMetadata,
@@ -105,3 +109,26 @@ async def get_recent_documents(current_user: dict = Depends(require_admin)):
   except (KeyError, TypeError, ValueError) as error:
     raise HTTPException(status_code=401, detail="Token không hợp lệ.") from error
   return service_get_recent_documents(user_id)
+
+
+@router.get("/{document_id}")
+async def get_document(
+  document_id: int,
+  _: dict = Depends(require_admin),
+):
+  try:
+    return get_document_detail(document_id)
+  except StorageServiceError as error:
+    raise HTTPException(status_code=error.status_code, detail=error.message) from error
+
+
+@router.post("/{document_id}/markdown")
+async def update_document_markdown(
+  document_id: int,
+  payload: DocumentMarkdownUpdate,
+  _: dict = Depends(require_admin),
+):
+  try:
+    return update_document_markdown_content(document_id, payload.markdown_content)
+  except StorageServiceError as error:
+    raise HTTPException(status_code=error.status_code, detail=error.message) from error
