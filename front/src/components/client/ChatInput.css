@@ -5,47 +5,6 @@
   flex-shrink: 0;
 }
 
-.embedding-notice {
-  margin: 0 0 0.45rem 0.35rem;
-  color: #5c667a;
-  font-size: 0.78rem;
-  line-height: 1.35;
-}
-
-.embedding-notice p {
-  margin: 0 0 0.35rem;
-}
-
-.embedding-progress {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  max-width: 32rem;
-}
-
-.embedding-progress-track {
-  height: 0.35rem;
-  flex: 1;
-  min-width: 8rem;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #dfe5ef;
-}
-
-.embedding-progress-fill {
-  height: 100%;
-  border-radius: inherit;
-  background: var(--accent);
-  transition: width 0.2s ease;
-}
-
-.embedding-progress-value {
-  min-width: 7.5rem;
-  color: #727d91;
-  font-size: 0.72rem;
-  white-space: nowrap;
-}
-
 .input-pill {
   display: flex;
   align-items: flex-end;

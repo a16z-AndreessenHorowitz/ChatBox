@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BACKEND_DIR / ".env")
 
-DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+DATABASE_URL = os.environ["DATABASE_URL"].strip()
 STORAGE_PROVIDER = os.getenv("STORAGE_PROVIDER", "cloudinary").strip()
 
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
@@ -20,6 +20,15 @@ SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "TS").strip()
 OTP_TTL_SECONDS = int(os.getenv("OTP_TTL_SECONDS", "300"))
 VERIFICATION_TTL_SECONDS = int(os.getenv("VERIFICATION_TTL_SECONDS", "900"))
 
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "7fK3mQ9xV2pL8nR4sT6wY1zA5cD8eG0hJ3kN6uP9xB2vM7qR4sL8").strip()
+JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"].strip()
+if not JWT_SECRET_KEY:
+  raise ValueError("JWT_SECRET_KEY chưa được cấu hình")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256").strip()
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "72000"))
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
+JWT_REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE_DAYS", "30"))
+JWT_REFRESH_SECRET_KEY = os.getenv("JWT_REFRESH_SECRET_KEY", JWT_SECRET_KEY).strip()
+AUTH_COOKIE_SECURE = os.getenv("AUTH_COOKIE_SECURE", "false").lower() == "true"
+AUTH_COOKIE_SAMESITE = os.getenv("AUTH_COOKIE_SAMESITE", "lax").strip().lower()
+FRONTEND_ORIGINS = [origin.strip() for origin in os.getenv(
+  "FRONTEND_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+).split(",") if origin.strip()]

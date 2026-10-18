@@ -5,8 +5,8 @@ import ChatInput from './ChatInput.jsx';
 import ChatSidebar from './ChatSidebar.jsx';
 import { initialMessages } from '../../mock/conversations.js';
 import { sendMessage, getHistory } from '../../services/api/chat.js';
-import { getClientEmbedding, isClientEmbeddingReady } from '../../services/embedding.js';
 import AuthModal from './AuthModal.jsx';
+import { useAuth } from '../../auth/AuthProvider.jsx';
 
 
 export default function ChatWindow() {
@@ -15,28 +15,19 @@ export default function ChatWindow() {
   const [activeId, setActiveId] = useState(null);
   const [authStep, setAuthStep] = useState(null);
   const [user, setUser] = useState(null);
-  const [isEmbeddingReady, setIsEmbeddingReady] = useState(isClientEmbeddingReady());
-  const [embeddingStatus, setEmbeddingStatus] = useState('');
-  const [embeddingProgress, setEmbeddingProgress] = useState(null);
+  const { user: authUser } = useAuth();
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  useEffect(() => {
-    const email = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail');
-    const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
-    if (email) {
-      setUser({ id: userId ? Number(userId) : null, email, name: email.split('@')[0], initials: 'TS' });
-    }
-  }, []);
+  useEffect(() => { setUser(authUser); }, [authUser]);
 
   useEffect(() => {
     async function loadChatHistory() {
       if (!activeId) return;
-      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-      if (!user || !token) return;
+      if (!user) return;
       setIsLoading(true);
       try {
         const data = await getHistory(activeId);
@@ -85,30 +76,8 @@ export default function ChatWindow() {
     setIsLoading(true);
 
     try {
-      console.log('[Chat] Bắt đầu tạo embedding cho câu hỏi');
-      setEmbeddingStatus(
-        isClientEmbeddingReady()
-          ? 'Đang nhúng câu hỏi...'
-          : 'Đang tải mô hình nhúng lần đầu, vui lòng chờ...'
-      );
-      const queryVector = await getClientEmbedding(text, (progress) => {
-        if (progress.status === 'progress' || progress.status === 'done') {
-          setEmbeddingProgress({
-            file: progress.file,
-            percent: Math.round(progress.progress ?? (progress.status === 'done' ? 100 : 0)),
-            loaded: progress.loaded,
-            total: progress.total,
-          });
-        }
-      });
-      console.log('[Chat] Tạo embedding thành công:', {
-        dimensions: queryVector.length,
-        preview: queryVector.slice(0, 5),
-      });
-      setIsEmbeddingReady(true);
-      setEmbeddingStatus('Đang gửi câu hỏi...');
       console.log('[Chat] Gửi request /chat');
-      const botMsg = await sendMessage(text, activeId, user?.id, user?.email, queryVector);
+      const botMsg = await sendMessage(text, activeId);
       console.log('[Chat] Nhận response /chat thành công');
       setMessages((prev) => [...prev, botMsg]);
       if (botMsg.session_id) {
@@ -131,8 +100,6 @@ export default function ChatWindow() {
         },
       ]);
     } finally {
-      setEmbeddingStatus('');
-      setEmbeddingProgress(null);
       setIsLoading(false);
     }
   };
@@ -187,9 +154,6 @@ export default function ChatWindow() {
         <ChatInput
           onSend={handleSend}
           isLoading={isLoading}
-          embeddingStatus={embeddingStatus}
-          embeddingProgress={embeddingProgress}
-          showEmbeddingNotice={!isEmbeddingReady}
         />
       </main>
 

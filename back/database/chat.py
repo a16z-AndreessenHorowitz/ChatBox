@@ -45,6 +45,7 @@ def initialize_chat_database():
           CREATE TABLE IF NOT EXISTS chat_messages (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             session_id UUID NOT NULL REFERENCES chat_sessions (id) ON DELETE CASCADE,
+            parent_id UUID REFERENCES chat_messages (id) ON DELETE SET NULL,
             role TEXT NOT NULL CHECK (role IN ('user', 'bot')),
             content TEXT NOT NULL,
             sources JSONB,
@@ -58,6 +59,12 @@ def initialize_chat_database():
 
         cursor.execute(
           "CREATE INDEX IF NOT EXISTS chat_messages_session_id_idx ON chat_messages (session_id)"
+        )
+        cursor.execute(
+          "ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES chat_messages (id) ON DELETE SET NULL"
+        )
+        cursor.execute(
+          "CREATE INDEX IF NOT EXISTS chat_messages_parent_id_idx ON chat_messages (parent_id)"
         )
         # các câu lệnh được thực hiện trong transaction.
         # commit xác nhận và lưu các thay đổi vào database.

@@ -31,18 +31,18 @@ function Login({ onClose, onAuthenticated, onRegister }) {
     try {
       const data = await login(formData.email, formData.password);
 
+      localStorage.removeItem('accessToken');
+      sessionStorage.removeItem('accessToken');
       const storage = formData.rememberMe ? localStorage : sessionStorage;
-      storage.setItem("accessToken", data.token);
       storage.setItem("userEmail", data.email);
-      if (data.user_id) {
-        storage.setItem("userId", data.user_id);
-      }
-      if (data.role) {
-        storage.setItem("userRole", data.role);
-      }
+      storage.setItem("userId", data.user_id);
+      storage.setItem("userRole", data.role);
+      const account = { id: data.user_id, email: data.email,
+        role: data.role, name: data.email.split('@')[0], initials: 'TS' };
+      window.dispatchEvent(new CustomEvent('auth:login', { detail: account }));
 
       if (typeof onAuthenticated === "function") {
-        onAuthenticated({ id: data.user_id, email: data.email, name: data.email.split('@')[0], initials: 'TS' });
+        onAuthenticated(account);
       }
 
       const isAdmin = Boolean(data.role) && data.role.toLowerCase() !== "user";

@@ -1,4 +1,5 @@
 from uuid import UUID
+from psycopg.types.json import Jsonb
 from database.connection import get_connection
 
 
@@ -24,7 +25,8 @@ def save_chat_message(
   content: str,
   sources=None,
   response_time_ms=None,
-) -> None:
+  parent_id: UUID | None = None,
+) -> UUID:
   with get_connection() as connection:
     with connection.cursor() as cursor:
       cursor.execute(
@@ -34,18 +36,22 @@ def save_chat_message(
           role,
           content,
           sources,
-          response_time_ms
+          response_time_ms,
+          parent_id
         )
-        VALUES (%s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING id
         """,
         (
           session_id,
           role,
           content,
-          sources,
+          Jsonb(sources) if sources is not None else None,
           response_time_ms,
+          parent_id,
         ),
       )
+      message_id = cursor.fetchone()[0]
       cursor.execute(
         """
         UPDATE chat_sessions
@@ -55,6 +61,24 @@ def save_chat_message(
         (session_id,),
       )
     connection.commit()
+  return message_id
+
+
+def get_latest_message_id(session_id: UUID) -> UUID | None:
+  with get_connection() as connection:
+    with connection.cursor() as cursor:
+      cursor.execute(
+        """
+        SELECT id
+        FROM chat_messages
+        WHERE session_id = %s
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1
+        """,
+        (session_id,),
+      )
+      row = cursor.fetchone()
+  return row[0] if row else None
 
 
 def get_chat_history(session_id: UUID) -> list[dict]:
@@ -64,6 +88,7 @@ def get_chat_history(session_id: UUID) -> list[dict]:
         """
         SELECT
           id,
+          parent_id,
           role,
           content,
           sources,
@@ -83,13 +108,14 @@ def get_chat_history(session_id: UUID) -> list[dict]:
   for row in rows:
     messages.append({
       "id": row[0],
-      "role": row[1],
-      "content": row[2],
-      "sources": row[3],
-      "response_time_ms": row[4],
-      "feedback": row[5],
-      "feedback_comment": row[6],
-      "created_at": row[7],
+      "parent_id": row[1],
+      "role": row[2],
+      "content": row[3],
+      "sources": row[4],
+      "response_time_ms": row[5],
+      "feedback": row[6],
+      "feedback_comment": row[7],
+      "created_at": row[8],
     })
   return messages
 

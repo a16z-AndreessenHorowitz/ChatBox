@@ -38,6 +38,16 @@ def get_user_id_by_account(account: str) -> int | None:
       return row[0] if row else None
 
 
+def get_user_by_id(user_id: int) -> dict | None:
+  with get_connection() as connection:
+    with connection.cursor() as cursor:
+      cursor.execute("SELECT id, account, role FROM users WHERE id = %s", (user_id,))
+      row = cursor.fetchone()
+      if row is None:
+        return None
+      return {"id": row[0], "account": row[1], "role": row[2]}
+
+
 def create_user(account: str, password_hash: str) -> int:
   with get_connection() as connection:
     with connection.cursor() as cursor:
