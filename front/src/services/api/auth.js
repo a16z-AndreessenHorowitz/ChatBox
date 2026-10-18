@@ -1,7 +1,8 @@
+import { request, setAccessToken, clearAccessToken } from './request';
 const API_BASE_URL = 'http://localhost:8000/api';
 
 async function request(path, options) {
-  const response = await fetch(`${API_BASE_URL}${path}`, options);
+  const response = await fetch(`${API_BASE_URL}${path}`, { credentials: 'include', ...options });
   let data = {};
 
   try {
@@ -23,13 +24,29 @@ export async function login(email, password) {
     throw new Error('Email và mật khẩu không được để trống.');
   }
 
-  return request('/auth/login', {
+  const data = await request('/auth/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ account: normalizedEmail, password })
   });
+  setAccessToken(data.token);
+  return data;
+}
+
+export async function logout() {
+  try { await request('/auth/logout', { method: 'POST' }); }
+  finally {
+    clearAccessToken();
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userRole');
+    sessionStorage.removeItem('userEmail');
+    sessionStorage.removeItem('userId');
+    sessionStorage.removeItem('userRole');
+    window.dispatchEvent(new Event('auth:logout'));
+  }
 }
 
 export async function sendOtp(account) {

@@ -188,7 +188,7 @@ def complete_register_service(
   }
 
 
-from services.auth_token import create_access_token, decode_access_token
+from services.auth_token import create_access_token, create_refresh_token, decode_access_token, decode_refresh_token
 
 def login_service(account: str, password: str) -> dict:
   normalized_account = normalize_account(account)
@@ -199,15 +199,30 @@ def login_service(account: str, password: str) -> dict:
 
   role = user.get("role", "user")
   token = create_access_token(user_id=user["id"], role=role)
+  refresh_token = create_refresh_token(user_id=user["id"], role=role)
 
   return {
     "ok": True,
     "user_id": user["id"],
     "role": role,
     "token": token,
+    "refresh_token": refresh_token,
     "account": normalized_account,
     "email": normalized_account,
   }
+
+
+def refresh_access_token_service(refresh_token: str) -> dict:
+  try:
+    payload = decode_refresh_token(refresh_token)
+  except InvalidTokenError as error:
+    raise AuthServiceError(error.message, 401) from error
+  user = user_repo.get_user_by_id(int(payload["sub"]))
+  if user is None:
+    raise AuthServiceError("Tài khoản không còn tồn tại.", 401)
+  role = user.get("role", "user")
+  return {"ok": True, "token": create_access_token(user["id"], role),
+          "user_id": user["id"], "role": role, "email": user["account"]}
 
 
 def get_user_id_by_account(account: str) -> int | None:

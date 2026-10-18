@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
+from fastapi.responses import JSONResponse
+from core.config import AUTH_COOKIE_SAMESITE, AUTH_COOKIE_SECURE, JWT_REFRESH_TOKEN_EXPIRE_DAYS
 from schemas.auth_schema import (
   CompleteRegisterRequest,
   LoginRequest,
@@ -10,6 +12,7 @@ from services.auth_service import (
   complete_register_service,
   get_current_user,
   login_service,
+  refresh_access_token_service,
   send_otp_service,
   verify_otp_service,
 )
@@ -37,8 +40,35 @@ def complete_register(data: CompleteRegisterRequest):
 
 
 @router.post("/login")
-def login(data: LoginRequest):
-  return run_service(login_service, data.account, data.password)
+def login(data: LoginRequest, response: Response):
+  result = run_service(login_service, data.account, data.password)
+  refresh_token = result.pop("refresh_token")
+  response.set_cookie(
+    "refreshToken", refresh_token, httponly=True, secure=AUTH_COOKIE_SECURE,
+    samesite=AUTH_COOKIE_SAMESITE, path="/api/auth", max_age=JWT_REFRESH_TOKEN_EXPIRE_DAYS * 86400,
+  )
+  return result
+
+
+@router.post("/refresh")
+def refresh(response: Response, refresh_token: str | None = Cookie(default=None, alias="refreshToken")):
+  if not refresh_token:
+    raise HTTPException(status_code=401, detail="Thiếu refresh token.")
+  try:
+    return refresh_access_token_service(refresh_token)
+  except AuthServiceError as error:
+    response.delete_cookie("refreshToken", path="/api/auth", httponly=True, secure=AUTH_COOKIE_SECURE,
+                           samesite=AUTH_COOKIE_SAMESITE)
+    return JSONResponse(status_code=error.status_code, content={"detail": error.message}, headers={
+      "Set-Cookie": response.headers.get("set-cookie", "")
+    })
+
+
+@router.post("/logout")
+def logout(response: Response):
+  response.delete_cookie("refreshToken", path="/api/auth", httponly=True, secure=AUTH_COOKIE_SECURE,
+                         samesite=AUTH_COOKIE_SAMESITE)
+  return {"ok": True}
 
 
 def run_service(service, *args):

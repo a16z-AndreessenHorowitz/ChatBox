@@ -21,8 +21,7 @@ export default function ChatSidebar({
 
   const [history, setHistory] = useState([]);
   useEffect(() => {
-    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-    if (!user || !token) {
+    if (!user) {
       setHistory([]);
       return;
     }

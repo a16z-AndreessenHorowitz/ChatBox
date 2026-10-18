@@ -8,14 +8,14 @@ import requests
 from google import genai
 from google.genai.errors import ClientError, ServerError
 
-from core.chat import GEMINI_API_KEY, GEMINI_MODEL
+from core.chat import GEMINI_API_KEY
 from repositories.document_repository import (
     get_document_by_id,
     update_document_category,
     update_document_markdown,
     update_document_status,
 )
-from repositories.chunk_repository import replace_document_chunks
+from repositories.chunk_repository import save_document_chunks
 
 from services.document.chunking_service import process_markdown_chunking
 from services.document.embedding_service import add_embeddings_to_chunks
@@ -40,12 +40,7 @@ def unique_model_list(models: list[str]) -> list[str]:
 
 
 GEMINI_DOCUMENT_MODELS = unique_model_list(
-    parse_model_list(
-        os.getenv(
-            "GEMINI_DOCUMENT_MODELS",
-            os.getenv("GEMINI_DOCUMENT_MODEL", GEMINI_MODEL),
-        )
-    )
+    parse_model_list(os.getenv("GEMINI_DOCUMENT_MODELS", ""))
 )
 
 client = genai.Client(api_key=GEMINI_API_KEY)
@@ -70,6 +65,7 @@ Hãy trích xuất toàn bộ nội dung tài liệu này sang định dạng Ma
 - Trả về kết quả thuần Markdown, không bọc trong ```markdown."""
 
 
+# làm sạch Markdown được trích xuất từ Gemini, loại bỏ các ký tự ```markdown và ``` thừa
 def clean_extracted_markdown(markdown_text: str) -> str:
     if not markdown_text:
         return ""
@@ -77,7 +73,7 @@ def clean_extracted_markdown(markdown_text: str) -> str:
     text = markdown_text.replace("```markdown", "").replace("```", "")
     return text.strip()
 
-
+# nhận biết xem một ngoại lệ (Exception) có phải do Gemini Service bị gỡ/quá tải/ngưng phục vụ hay không
 def is_gemini_unavailable_error(error: Exception) -> bool:
     error_text = str(error).lower()
     return (
@@ -87,7 +83,7 @@ def is_gemini_unavailable_error(error: Exception) -> bool:
         or "high demand" in error_text
     )
 
-
+# nhận biết xem một ngoại lệ (Exception) có phải do model Gemini không khả dụng với tài khoản/API hay không
 def is_gemini_model_not_found_error(error: Exception) -> bool:
     error_text = str(error).lower()
     return (
@@ -101,7 +97,9 @@ def is_gemini_model_not_found_error(error: Exception) -> bool:
 def generate_content_with_model_fallback(contents, task_label: str):
     last_error = None
 
+    #  Thử từng model trong GEMINI_DOCUMENT_MODELS, nếu model đầu tiên thất bại thì chuyển sang model tiếp theo
     for model_index, model in enumerate(GEMINI_DOCUMENT_MODELS, start=1):
+        # Thử nhiều lần với từng model, nếu gặp lỗi tạm thời (503, quá tải) thì thử lại với backoff
         for attempt in range(1, MAX_RETRIES + 1):
             try:
                 print(
@@ -142,7 +140,7 @@ def generate_content_with_model_fallback(contents, task_label: str):
                     f"[Worker] Gemini ClientError khi {task_label} "
                     f"model={model}: {status_code} {error}"
                 )
-
+                # Nếu model không khả dụng với tài khoản/API, thì chuyển sang model tiếp theo break để tránh tốn thời gian
                 if is_gemini_model_not_found_error(error):
                     print(
                         f"[Worker] Model {model} không khả dụng với tài khoản/API này, "
@@ -169,12 +167,12 @@ def generate_content_with_model_fallback(contents, task_label: str):
     if last_error and is_gemini_model_not_found_error(last_error):
         raise ValueError(
             "Các model Gemini đang cấu hình không khả dụng với tài khoản/API này. "
-            "Vui lòng kiểm tra lại GEMINI_DOCUMENT_MODELS hoặc GEMINI_MODEL trong .env."
+            "Vui lòng kiểm tra lại GEMINI_DOCUMENT_MODELS trong .env."
         ) from last_error
 
     raise ValueError("Không có model Gemini khả dụng để xử lý tài liệu.")
 
-
+# chuẩn hoá danh mục tài liệu, loại bỏ các ký tự thừa và so sánh không phân biệt hoa thường
 def normalize_document_category(category_text: str) -> str:
     if not category_text:
         return "Khác"
@@ -198,6 +196,7 @@ def normalize_document_category(category_text: str) -> str:
     return "Khác"
 
 
+#phân loại danh mục tài liệu tuyển sinh dựa trên phương pháp tìm kiếm từ khóa cục bộ (Rule-based / Keyword Matching)
 def classify_document_category_locally(
     markdown_content: str,
     original_filename: str = "",
@@ -257,11 +256,12 @@ Chỉ trả về đúng tên category, không giải thích."""
 
 
 def download_remote_file(secure_url: str, temp_file_obj):
+    # Tải file từ secure_url về temp_file_obj, kiểm tra kích thước file và retry nếu gặp lỗi tạm thời
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             with requests.get(secure_url, stream=True, timeout=(5, 60)) as response:
                 response.raise_for_status()
-
+                
                 content_length = response.headers.get("Content-Length")
                 if content_length and int(content_length) > MAX_FILE_SIZE:
                     raise ValueError(
@@ -348,6 +348,7 @@ def extract_document(document_id: int):
             "file_type": suffix.lstrip(".").lower(),
             "category": category,
         }
+        
         print(f"[Worker] Đang chia chunks cho document_id {document_id}...")
         chunks = process_markdown_chunking(extracted_markdown, base_metadata)
         print(f"[Worker] Đã tạo {len(chunks)} chunks cho document_id {document_id}")
@@ -357,7 +358,7 @@ def extract_document(document_id: int):
         print(f"[Worker] Đã tạo embeddings cho document_id {document_id}")
 
         print(f"[Worker] Đang lưu chunks cho document_id {document_id}...")
-        saved_chunk_count = replace_document_chunks(document_id, chunks)
+        saved_chunk_count = save_document_chunks(document_id, chunks)
         print(f"[Worker] Đã lưu thành công {saved_chunk_count} chunks cho document_id: {document_id}")
 
         

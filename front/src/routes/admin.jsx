@@ -1,19 +1,17 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import DashBoard from "../pages/admin/dashBoard";
 import DocumentKnowledge from "../pages/admin/documentKnowledge";
+import { useAuth } from "../auth/AuthProvider.jsx";
 
 export function ProtectedAdminRoutes({ children }) {
-  const token =
-    localStorage.getItem("accessToken") ||
-    sessionStorage.getItem("accessToken");
-  const role =
-    localStorage.getItem("userRole") || sessionStorage.getItem("userRole");
+  const { user, loading } = useAuth();
+  if (loading) return null;
   // 1. Chưa đăng nhập -> Chuyển về trang Login
-  if (!token) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
   // 2. Đã đăng nhập nhưng là 'user' thường -> Chuyển về trang chủ Chat
-  if (role?.toLowerCase() === "user") {
+  if (user.role?.toLowerCase() === "user") {
     return <Navigate to="/" replace />;
   }
   // 3. Là Admin / Role khác 'user' -> Cho phép xem trang Dashboard

@@ -5,6 +5,7 @@ from database.init_db import init_db
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import api_router
+from core.config import FRONTEND_ORIGINS
 
 
 @asynccontextmanager
@@ -22,7 +23,8 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
   CORSMiddleware,
-  allow_origins=["*"],
+  allow_origins=FRONTEND_ORIGINS,
+  allow_credentials=True,
   allow_methods=["*"],
   allow_headers=["*"],
 )

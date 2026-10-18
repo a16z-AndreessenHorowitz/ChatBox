@@ -9,7 +9,8 @@ from services.document.document_service import (
   get_document_detail,
   update_document_markdown_content,
 )
-from services.auth_service import get_current_user
+from dependencies.auth import require_admin
+
 from services.cloudflare import (
   create_upload_credentials,
   get_recent_documents as service_get_recent_documents,
@@ -21,11 +22,6 @@ from schemas.document_schema import DocumentMarkdownUpdate, DocumentMetadata, Up
 router = APIRouter(prefix="/documents", tags=["Documents"])
 MAX_UPLOAD_SIZE = 50 * 1024 * 1024
 ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt"}
-
-def require_admin(current_user: dict = Depends(get_current_user)) -> dict:
-  if current_user.get("role", "user").lower() == "user":
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Bạn không có quyền tải tài liệu lên.")
-  return current_user
 
 # xin quyền upload 
 @router.post("/upload/signature")

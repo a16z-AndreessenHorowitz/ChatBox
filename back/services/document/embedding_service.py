@@ -92,17 +92,3 @@ def embed_query(query: str) -> List[float]:
     return _encode([formatted_query])[0]
 
 
-if __name__ == "__main__":
-    # Test thử trực tiếp file embedding_service
-    sample_texts = [
-        "Ngành Công nghệ thông tin lấy điểm chuẩn 25.10 điểm.",
-        "Trường xét tuyển thẳng các thí sinh có chứng chỉ IELTS từ 6.0.",
-    ]
-    print("\n--- Testing embed_documents ---")
-    doc_vectors = embed_documents(sample_texts)
-    print(f"Số lượng vectors: {len(doc_vectors)}")
-    print(f"Số chiều của vector: {len(doc_vectors[0]) if doc_vectors else 0}")
-
-    print("\n--- Testing embed_query ---")
-    query_vector = embed_query("Điểm chuẩn ngành CNTT?")
-    print(f"Số chiều vector câu hỏi: {len(query_vector)}")

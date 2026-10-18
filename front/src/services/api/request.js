@@ -1,30 +1,71 @@
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = "http://localhost:8000/api";
+let accessToken = null;
+let refreshPromise = null;
 
-export async function request(path, options = {}) {
-  const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-  const headers = {
-    ...(options.headers || {}),
-  };
+//dùng để set accessToken khi login thành công
+export function setAccessToken(token) {
+  accessToken = token || null;
+}
+//clear accessToken khi logout hoặc refresh token thất bại
+export function clearAccessToken() {
+  accessToken = null;
+}
 
-  if (token && !headers['Authorization']) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
-
+//dùng để parse response từ server, nếu response không có body thì trả về object rỗng
+async function parseResponse(response) {
   let data = {};
   try {
     data = await response.json();
   } catch {
-    data = {};
+    /* Empty response body. */
   }
+  return data;
+}
 
-  if (!response.ok) {
-    throw new Error(data.detail || data.message || 'Yêu cầu thất bại.');
+//cấp lại accesToken khi hết hạn
+export async function refreshAccessToken() {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    })
+      .then(async (response) => {
+        const data = await parseResponse(response);
+        if (!response.ok)
+          throw new Error(data.detail || "Phiên đăng nhập đã hết hạn.");
+        setAccessToken(data.token);
+        return data;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
   }
+  return refreshPromise;
+}
 
+export async function request(path, options = {}) {
+  const send = () =>
+    fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      credentials: "include",
+      headers: {
+        ...(options.headers || {}),
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+    });
+
+  let response = await send();
+  // chỉ tự động refresh token khi request API thông thường bị lỗi 401, không áp dụng cho các API thuộc nhóm /auth/.
+  if (response.status === 401 && accessToken && !path.startsWith("/auth/")) {
+    try {
+      await refreshAccessToken();
+      response = await send();
+    } catch {
+      clearAccessToken();
+    }
+  }
+  const data = await parseResponse(response);
+  if (!response.ok)
+    throw new Error(data.detail || data.message || "Yêu cầu thất bại.");
   return data;
 }
