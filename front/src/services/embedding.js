@@ -17,6 +17,8 @@ export async function getClientEmbedding(text, onProgress) {
     console.log('[Embedding] Bắt đầu tải model Xenova/multilingual-e5-small...');
     extractor = await pipeline('feature-extraction', 'Xenova/multilingual-e5-small', {
       quantized: true,
+      // Pin the Transformers.js v2-compatible export (before the repo's v3 update).
+      revision: 'ae61bf0',
       progress_callback: (progress) => {
         onProgress?.(progress);
         if (progress.status === 'progress') {

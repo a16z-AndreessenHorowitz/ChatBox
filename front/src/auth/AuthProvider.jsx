@@ -11,6 +11,13 @@ export default function AuthProvider({ children }) {
   useEffect(() => {
     let active = true;
     const restore = async () => {
+      const hasStoredSession =
+        localStorage.getItem('userId') || sessionStorage.getItem('userId');
+      if (!hasStoredSession) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const data = await refreshAccessToken();
         if (!active) return;
@@ -21,7 +28,14 @@ export default function AuthProvider({ children }) {
         localStorage.setItem('userRole', data.role);
         setUser(account);
       } catch {
-        if (active) setUser(null);
+        if (active) {
+          setUser(null);
+          for (const storage of [localStorage, sessionStorage]) {
+            storage.removeItem('userEmail');
+            storage.removeItem('userId');
+            storage.removeItem('userRole');
+          }
+        }
       } finally { if (active) setLoading(false); }
     };
     restore();

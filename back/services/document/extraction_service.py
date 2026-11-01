@@ -1,4 +1,3 @@
-import os
 import tempfile
 import time
 import traceback
@@ -9,6 +8,7 @@ from google import genai
 from google.genai.errors import ClientError, ServerError
 
 from core.chat import GEMINI_API_KEY
+from core.extraction import GEMINI_DOCUMENT_MODELS
 from repositories.document_repository import (
     get_document_by_id,
     update_document_category,
@@ -24,24 +24,6 @@ MAX_FILE_SIZE = 50 * 1024 * 1024
 CHUNK_SIZE = 1024 * 1024
 MAX_RETRIES = 3
 
-
-def parse_model_list(value: str) -> list[str]:
-    return [model.strip() for model in value.split(",") if model.strip()]
-
-
-def unique_model_list(models: list[str]) -> list[str]:
-    unique_models = []
-    seen = set()
-    for model in models:
-        if model not in seen:
-            unique_models.append(model)
-            seen.add(model)
-    return unique_models
-
-
-GEMINI_DOCUMENT_MODELS = unique_model_list(
-    parse_model_list(os.getenv("GEMINI_DOCUMENT_MODELS", ""))
-)
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 

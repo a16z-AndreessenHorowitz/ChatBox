@@ -43,7 +43,7 @@ export async function refreshAccessToken() {
   return refreshPromise;
 }
 
-export async function request(path, options = {}) {
+export async function requestRaw(path, options = {}) {
   const send = () =>
     fetch(`${API_BASE_URL}${path}`, {
       ...options,
@@ -56,7 +56,7 @@ export async function request(path, options = {}) {
 
   let response = await send();
   // chỉ tự động refresh token khi request API thông thường bị lỗi 401, không áp dụng cho các API thuộc nhóm /auth/.
-  if (response.status === 401 && accessToken && !path.startsWith("/auth/")) {
+  if (response.status === 401 && !path.startsWith("/auth/")) {
     try {
       await refreshAccessToken();
       response = await send();
@@ -64,8 +64,14 @@ export async function request(path, options = {}) {
       clearAccessToken();
     }
   }
-  const data = await parseResponse(response);
-  if (!response.ok)
+  if (!response.ok) {
+    const data = await parseResponse(response);
     throw new Error(data.detail || data.message || "Yêu cầu thất bại.");
-  return data;
+  }
+  return response;
+}
+
+export async function request(path, options = {}) {
+  const response = await requestRaw(path, options);
+  return parseResponse(response);
 }

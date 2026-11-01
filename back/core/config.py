@@ -20,9 +20,12 @@ SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "TS").strip()
 OTP_TTL_SECONDS = int(os.getenv("OTP_TTL_SECONDS", "300"))
 VERIFICATION_TTL_SECONDS = int(os.getenv("VERIFICATION_TTL_SECONDS", "900"))
 
-JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"].strip()
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "").strip()
 if not JWT_SECRET_KEY:
-  raise ValueError("JWT_SECRET_KEY chưa được cấu hình")
+  raise ValueError(
+    "JWT_SECRET_KEY chưa được cấu hình. Hãy thêm JWT_SECRET_KEY vào back/.env "
+    "hoặc đặt biến môi trường này trước khi khởi chạy ứng dụng."
+  )
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256").strip()
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
 JWT_REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE_DAYS", "30"))

@@ -1,22 +1,4 @@
 import { request, setAccessToken, clearAccessToken } from './request';
-const API_BASE_URL = 'http://localhost:8000/api';
-
-async function request(path, options) {
-  const response = await fetch(`${API_BASE_URL}${path}`, { credentials: 'include', ...options });
-  let data = {};
-
-  try {
-    data = await response.json();
-  } catch {
-    data = {};
-  }
-
-  if (!response.ok) {
-    throw new Error(data.detail || data.message || 'Yêu cầu thất bại.');
-  }
-
-  return data;
-}
 
 export async function login(email, password) {
   const normalizedEmail = email?.trim();
