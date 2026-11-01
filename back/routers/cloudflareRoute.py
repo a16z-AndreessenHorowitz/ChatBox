@@ -45,10 +45,12 @@ async def save_upload_metadata(
 ):
   try:
     user_id = int(current_user["sub"])
-    values = metadata.model_dump() if hasattr(metadata, "model_dump") else metadata.dict()
-    return create_document_metadata(user_id, values, background_tasks=background_tasks)
   except (KeyError, TypeError, ValueError) as error:
     raise HTTPException(status_code=401, detail="Token không hợp lệ.") from error
+
+  values = metadata.model_dump() if hasattr(metadata, "model_dump") else metadata.dict()
+  try:
+    return create_document_metadata(user_id, values, background_tasks=background_tasks)
   except StorageServiceError as error:
     raise HTTPException(status_code=error.status_code, detail=error.message) from error
 

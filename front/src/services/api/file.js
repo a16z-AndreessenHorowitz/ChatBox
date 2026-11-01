@@ -1,41 +1,29 @@
 import { request } from "./request";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
-const R2_UPLOAD_TIMEOUT_MS = 60_000;
 
 async function uploadToStorage(uploadUrl, file, headers = {}) {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), R2_UPLOAD_TIMEOUT_MS);
-
+  let response;
   try {
-    return await fetch(uploadUrl, {
+    response = await fetch(uploadUrl, {
       method: 'PUT',
-      headers: {
-        'Content-Type': file.type || 'application/octet-stream',
-        ...headers,
-      },
+      headers,
       body: file,
-      signal: controller.signal,
     });
   } catch (error) {
-    if (error.name === 'AbortError') {
-      throw new Error('Upload lên Cloudflare R2 quá lâu, vui lòng thử lại.');
-    }
-    throw new Error('Không upload được lên Cloudflare R2. Kiểm tra CORS bucket R2 hoặc kết nối mạng.');
-  } finally {
-    window.clearTimeout(timeoutId);
+    throw new Error(
+      'Không kết nối được tới R2 khi upload bằng presigned URL. Kiểm tra CORS bucket: origin frontend, phương thức PUT và header Content-Type.',
+      { cause: error },
+    );
+  }
+
+  if (!response.ok) {
+    const details = await response.text().catch(() => '');
+    throw new Error(
+      `R2 từ chối upload (HTTP ${response.status})${details ? `: ${details}` : '.'}`,
+    );
   }
 }
-
-async function uploadViaBackend(file) {
-  const formData = new FormData();
-  formData.append('file', file);
-  return request('/documents/upload', {
-    method: 'POST',
-    body: formData,
-  });
-}
-
 
 export async function uploadFile(file) {
   if (!file) throw new Error("Chưa chọn tệp.");
@@ -43,7 +31,7 @@ export async function uploadFile(file) {
     throw new Error(`${file.name} vượt quá giới hạn 50MB.`);
   }
 
-  console.info('[Upload] Xin quyền upload:', file.name);
+  console.info('[Upload] Xin presigned URL:', file.name);
   const credentials = await request('/documents/upload/signature', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -53,24 +41,14 @@ export async function uploadFile(file) {
       file_size: file.size,
     }),
   });
-  console.info('[Upload] Đang upload lên Cloudflare R2:', credentials.metadata?.public_id);
-  let uploadResponse;
-  try {
-    uploadResponse = await uploadToStorage(credentials.upload_url, file, credentials.headers);
-  } catch (error) {
-    console.warn('[Upload] Direct R2 upload lỗi, chuyển sang backend upload:', error.message);
-    return uploadViaBackend(file);
-  }
-  const uploadText = await uploadResponse.text().catch(() => '');
-  if (!uploadResponse.ok) {
-    throw new Error(uploadText || 'Upload storage thất bại.');
-  }
 
-  const metadata = credentials.metadata || {};
-  metadata.original_filename = file.name;
-  metadata.file_size = file.size;
+  await uploadToStorage(credentials.upload_url, file, credentials.headers);
 
-  console.info('[Upload] Upload R2 xong, lưu metadata:', metadata.public_id);
+  const metadata = {
+    ...credentials.metadata,
+    original_filename: file.name,
+    file_size: file.size,
+  };
   return request('/documents/upload/metadata', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
