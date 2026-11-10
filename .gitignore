@@ -12,8 +12,10 @@ __pycache__/
 .env.*
 !.env.example
 
-# ONNX model files (quá lớn cho GitHub, tải riêng khi deploy)
+# Large ML / ONNX Models (> 100MB không push lên GitHub)
 *.onnx
+*.bin
+*.tar.gz
 
 # Node
 node_modules/
