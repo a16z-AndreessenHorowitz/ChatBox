@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import DashBoard from "../pages/admin/dashBoard";
 import DocumentKnowledge from "../pages/admin/documentKnowledge";
+import RagEvaluation from "../pages/admin/ragEvaluation";
 import { useAuth } from "../auth/AuthProvider.jsx";
 
 export function ProtectedAdminRoutes({ children }) {
@@ -34,6 +35,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedAdminRoutes>
             <DocumentKnowledge />
+          </ProtectedAdminRoutes>
+        }
+      />
+      <Route
+        path="/rag_evaluation"
+        element={
+          <ProtectedAdminRoutes>
+            <RagEvaluation />
           </ProtectedAdminRoutes>
         }
       />
