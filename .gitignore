@@ -12,6 +12,9 @@ __pycache__/
 .env.*
 !.env.example
 
+# ONNX model files (quá lớn cho GitHub, tải riêng khi deploy)
+*.onnx
+
 # Node
 node_modules/
 dist/
