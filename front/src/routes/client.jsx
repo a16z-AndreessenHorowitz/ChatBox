@@ -1,4 +1,5 @@
 import { Link, Navigate, Route, Routes } from 'react-router-dom';
+import Home from '../pages/client/Home.jsx';
 import ChatWindow from '../components/client/ChatWindow.jsx';
 import Login from '../components/client/Login.jsx';
 import Register from '../components/client/Register.jsx';
@@ -24,7 +25,7 @@ function ForgotPasswordPage() {
 export default function ClientRoutes() {
   return (
     <Routes>
-
+      <Route path="/" element={<Home />} />
       <Route path="/chat" element={<ChatWindow />} />
       <Route
         path="/login"

@@ -21,7 +21,7 @@ from services.document.chunking_service import process_markdown_chunking
 from services.document.embedding_service import add_embeddings_to_chunks
 
 MAX_FILE_SIZE = 50 * 1024 * 1024
-CHUNK_SIZE = 1024 * 1024
+CHUNK_SIZE = 10 *1024 * 1024
 MAX_RETRIES = 3
 
 

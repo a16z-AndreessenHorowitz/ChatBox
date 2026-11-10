@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { getSessions } from '../../services/api/chat';
 import './ChatSidebar.css';
 
@@ -64,12 +65,18 @@ export default function ChatSidebar({
 
       {/* New chat button */}
       {!collapsed && (
-        <button className="new-chat-btn-sidebar" onClick={onNewChat}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Hội thoại mới
-        </button>
+        <div className="d-flex flex-column gap-2 mb-3">
+          <Link to="/" className="btn btn-outline-primary btn-sm rounded-pill d-flex align-items-center justify-content-center gap-2 py-2 text-decoration-none">
+            <i className="bi bi-arrow-left"></i>
+            <span>Về Trang Chủ CTUT</span>
+          </Link>
+          <button className="new-chat-btn-sidebar" onClick={onNewChat}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Hội thoại mới
+          </button>
+        </div>
       )}
 
       {/* History */}

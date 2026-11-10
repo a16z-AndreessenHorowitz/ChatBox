@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import './ChatWindow.css';
 import MessageBubble from './MessageBubble.jsx';
 import ChatInput from './ChatInput.jsx';
@@ -31,12 +32,30 @@ export default function ChatWindow() {
   const [user, setUser] = useState(null);
   const { user: authUser } = useAuth();
   const messagesEndRef = useRef(null);
+  const location = useLocation();
+  const pendingQuestionRef = useRef(location.state?.initialQuestion || null);
+
+  useEffect(() => {
+    if (location.state?.initialQuestion) {
+      pendingQuestionRef.current = location.state.initialQuestion;
+    }
+  }, [location.state]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
   useEffect(() => { setUser(authUser); }, [authUser]);
+
+  useEffect(() => {
+    if (user && pendingQuestionRef.current && !isLoading) {
+      const q = pendingQuestionRef.current;
+      pendingQuestionRef.current = null;
+      handleSend(q);
+    } else if (!user && pendingQuestionRef.current) {
+      setAuthStep('true');
+    }
+  }, [user, isLoading]);
 
   useEffect(() => {
     async function loadChatHistory() {
